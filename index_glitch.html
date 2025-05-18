@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Succinct Crab Catcher</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap');
+        
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-blue: #00ffff;
+            --neon-green: #00ff00;
+            --neon-purple: #9400d3;
+            --dark-bg: #0a0a0a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'VT323', monospace;
+            background-color: var(--dark-bg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: var(--neon-green);
+            position: relative;
+        }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 10;
+            animation: scanline 10s linear infinite;
+        }
+        
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                circle at center,
+                transparent 0%,
+                rgba(10, 10, 10, 0.8) 90%
+            );
+            pointer-events: none;
+            z-index: 11;
+        }
+        
+        @keyframes scanline {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 0 100%;
+            }
+        }
+        
+        @keyframes glitch {
+            0% {
+                transform: translate(0);
+            }
+            20% {
+                transform: translate(-2px, 2px);
+            }
+            40% {
+                transform: translate(-2px, -2px);
+            }
+            60% {
+                transform: translate(2px, 2px);
+            }
+            80% {
+                transform: translate(2px, -2px);
+            }
+            100% {
+                transform: translate(0);
+            }
+        }
+        
+        @keyframes rgb-split {
+            0% {
+                text-shadow: -2px 0 var(--neon-blue), 2px 0 var(--neon-pink);
+            }
+            25% {
+                text-shadow: -4px 0 var(--neon-blue), 4px 0 var(--neon-pink);
+            }
+            50% {
+                text-shadow: -2px 0 var(--neon-blue), 2px 0 var(--neon-pink);
+            }
+            75% {
+                text-shadow: -4px 0 var(--neon-blue), 4px 0 var(--neon-pink);
+            }
+            100% {
+                text-shadow: -2px 0 var(--neon-blue), 2px 0 var(--neon-pink);
+            }
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 1; }
+            5% { opacity: 0.8; }
+            10% { opacity: 1; }
+            15% { opacity: 0.3; }
+            20% { opacity: 1; }
+            55% { opacity: 1; }
+            60% { opacity: 0.3; }
+            65% { opacity: 1; }
+            70% { opacity: 0.7; }
+            75% { opacity: 1; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background-color: rgba(20, 20, 20, 0.8);
+            border: 4px solid var(--neon-purple);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px var(--neon-purple), inset 0 0 10px var(--neon-purple);
+            z-index: 5;
+        }
+        
+        #game-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, rgba(255, 0, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255, 0, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+        
+        #player {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-image: url('cap_pink.webp');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 10;
+            filter: drop-shadow(0 0 5px var(--neon-pink));
+            animation: rgb-split 5s infinite;
+        }
+        
+        .crab {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-image: url('crab_pink.webp');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 5;
+            filter: drop-shadow(0 0 5px var(--neon-blue));
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        .logo {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-image: url('succinct_logo.webp');
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 5;
+            filter: drop-shadow(0 0 8px var(--neon-green));
+            animation: flicker 5s infinite;
+        }
+        
+        .trap {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: var(--neon-pink);
+            border-radius: 50%;
+            z-index: 4;
+            opacity: 0.7;
+            box-shadow: 0 0 10px var(--neon-pink);
+            animation: flicker 2s infinite;
+        }
+        
+        .trap::before {
+            content: "!";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: black;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        
+        #score-container {
+            margin-top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 2px;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 10, 10, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+        
+        #start-screen h1 {
+            color: var(--neon-purple);
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--neon-purple);
+            animation: rgb-split 5s infinite;
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 2px;
+        }
+        
+        .glitch-btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: transparent;
+            color: var(--neon-green);
+            border: 2px solid var(--neon-green);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            font-family: 'VT323', monospace;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .glitch-btn:hover {
+            background-color: rgba(0, 255, 0, 0.2);
+            transform: scale(1.05);
+            animation: glitch 0.3s infinite;
+        }
+        
+        .glitch-btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(0, 255, 0, 0.4),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        
+        .glitch-btn:hover::before {
+            left: 100%;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 10, 10, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+        
+        #game-over h2 {
+            color: var(--neon-pink);
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--neon-pink);
+            animation: rgb-split 5s infinite;
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 2px;
+        }
+        
+        .instructions {
+            margin: 20px 0;
+            text-align: center;
+            color: var(--neon-blue);
+            font-size: 22px;
+            max-width: 80%;
+            text-shadow: 0 0 5px var(--neon-blue);
+            line-height: 1.4;
+        }
+        
+        .gprove-text {
+            color: var(--neon-purple);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--neon-purple);
+            animation: flicker 3s infinite;
+        }
+        
+        #wallet-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #wallet-status {
+            font-size: 18px;
+            color: var(--neon-blue);
+            margin: 10px 0;
+            text-shadow: 0 0 5px var(--neon-blue);
+            font-family: 'VT323', monospace;
+            letter-spacing: 1px;
+        }
+        
+        #transaction-status {
+            font-size: 18px;
+            color: var(--neon-blue);
+            margin: 10px 0;
+            max-width: 80%;
+            text-align: center;
+            text-shadow: 0 0 5px var(--neon-blue);
+            font-family: 'VT323', monospace;
+            letter-spacing: 1px;
+        }
+        
+        #leaderboard-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(10, 10, 10, 0.7);
+            border: 2px solid var(--neon-blue);
+            border-radius: 5px;
+            padding: 10px;
+            width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 15;
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+        
+        #leaderboard-container h3 {
+            color: var(--neon-blue);
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 0 0 5px var(--neon-blue);
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 1px;
+        }
+        
+        #leaderboard {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        #leaderboard li {
+            color: var(--neon-green);
+            font-size: 16px;
+            margin: 5px 0;
+            text-shadow: 0 0 3px var(--neon-green);
+            font-family: 'VT323', monospace;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .code-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0.1;
+            overflow: hidden;
+        }
+        
+        .code-line {
+            position: absolute;
+            color: var(--neon-green);
+            font-size: 14px;
+            font-family: monospace;
+            white-space: nowrap;
+            animation: code-fall linear infinite;
+        }
+        
+        @keyframes code-fall {
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(100vh);
+            }
+        }
+        
+        @media (max-width: 850px) {
+            #game-container {
+                width: 90vw;
+                height: 70vh;
+            }
+            
+            #start-screen h1, #game-over h2 {
+                font-size: 32px;
+            }
+            
+            .instructions {
+                font-size: 18px;
+            }
+            
+            #leaderboard-container {
+                width: 150px;
+                top: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="code-overlay" id="code-overlay"></div>
+        <div id="player"></div>
+        <div id="leaderboard-container">
+            <h3>TOP SCORES</h3>
+            <ul id="leaderboard"></ul>
+        </div>
+        <div id="start-screen">
+            <h1>Succinct Crab Catcher</h1>
+            <p class="instructions">Catch Succinct crabs and collect logos to earn points!<br>Avoid touching the screen edges and traps!</p>
+            <p class="instructions">Use arrow keys or touch the screen to move the cap.</p>
+            <p class="instructions"><span class="gprove-text">Gprove 💜</span> is optimistic about your score!</p>
+            <div id="wallet-container">
+                <button id="connect-wallet-button" class="glitch-btn">Connect Wallet</button>
+                <div id="wallet-status">Wallet not connected</div>
+            </div>
+            <button id="start-button" class="glitch-btn">START</button>
+        </div>
+        <div id="game-over">
+            <h2>Game Over!</h2>
+            <p id="final-score" class="instructions">Score: 0</p>
+            <button id="restart-button" class="glitch-btn">PLAY AGAIN</button>
+            <button id="generate-transaction-button" class="glitch-btn">Generate Testnet Transaction</button>
+            <div id="transaction-status"></div>
+        </div>
+    </div>
+    <div id="score-container">Score: <span id="score">0</span></div>
+
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3modal@1.9.8/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game elements
+            const gameContainer = document.getElementById('game-container');
+            const player = document.getElementById('player');
+            const scoreElement = document.getElementById('score');
+            const startScreen = document.getElementById('start-screen');
+            const startButton = document.getElementById('start-button');
+            const gameOverScreen = document.getElementById('game-over');
+            const restartButton = document.getElementById('restart-button');
+            const finalScoreElement = document.getElementById('final-score');
+            const connectWalletButton = document.getElementById('connect-wallet-button');
+            const walletStatusElement = document.getElementById('wallet-status');
+            const generateTransactionButton = document.getElementById('generate-transaction-button');
+            const transactionStatusElement = document.getElementById('transaction-status');
+            const leaderboardElement = document.getElementById('leaderboard');
+            const codeOverlay = document.getElementById('code-overlay');
+            
+            // Game state
+            let gameRunning = false;
+            let score = 0;
+            let playerX = 370;
+            let playerY = 270;
+            let playerSpeed = 5;
+            let crabs = [];
+            let logos = [];
+            let traps = [];
+            let gameLoopInterval;
+            let crabInterval;
+            let logoInterval;
+            let trapInterval;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let walletConnected = false;
+            let walletAddress = '';
+            let provider = null;
+            let signer = null;
+            let web3Modal = null;
+            
+            // Sound effects
+            const sounds = {
+                start: new Audio('https://assets.codepen.io/21542/howler-push.mp3'),
+                catch: new Audio('https://assets.codepen.io/21542/howler-sfx-levelup.mp3'),
+                logo: new Audio('https://assets.codepen.io/21542/howler-sfx-coin3.mp3'),
+                trap: new Audio('https://assets.codepen.io/21542/howler-sfx-negative1.mp3'),
+                gameOver: new Audio('https://assets.codepen.io/21542/howler-sfx-negative2.mp3'),
+                wallet: new Audio('https://assets.codepen.io/21542/howler-sfx-levelup.mp3'),
+                transaction: new Audio('https://assets.codepen.io/21542/howler-sfx-coin4.mp3')
+            };
+            
+            // Adjust volume
+            Object.values(sounds).forEach(sound => {
+                sound.volume = 0.3;
+            });
+            
+            // Leaderboard data
+            const leaderboard = [
+                { name: "0xSUCC...", score: 500 },
+                { name: "0xGPRO...", score: 450 },
+                { name: "0xZKP...", score: 400 },
+                { name: "0xCRAB...", score: 350 },
+                { name: "0xTEST...", score: 300 }
+            ];
+            
+            // Update leaderboard display
+            function updateLeaderboard() {
+                leaderboardElement.innerHTML = '';
+                leaderboard.sort((a, b) => b.score - a.score).slice(0, 5).forEach(entry => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${entry.name}</span> <span>${entry.score}</span>`;
+                    leaderboardElement.appendChild(li);
+                });
+            }
+            
+            // Initialize leaderboard
+            updateLeaderboard();
+            
+            // Generate code overlay
+            function generateCodeOverlay() {
+                codeOverlay.innerHTML = '';
+                const codeSnippets = [
+                    "function proveZK(data) {",
+                    "const proof = generateProof(data);",
+                    "return verifyProof(proof);",
+                    "async function connectWallet() {",
+                    "const accounts = await ethereum.request({",
+                    "method: 'eth_requestAccounts'",
+                    "const tx = await contract.submit(proof);",
+                    "await tx.wait();",
+                    "const succinctProof = new Proof();",
+                    "for (let i = 0; i < data.length; i++) {",
+                    "proof.append(hash(data[i]));",
+                    "const merkleRoot = tree.getRoot();",
+                    "const verifier = new Verifier();",
+                    "import { ethers } from 'ethers';",
+                    "const provider = new ethers.providers.Web3Provider(window.ethereum);"
+                ];
+                
+                for (let i = 0; i < 15; i++) {
+                    const codeLine = document.createElement('div');
+                    codeLine.className = 'code-line';
+                    codeLine.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+                    codeLine.style.left = `${Math.random() * 100}%`;
+                    codeLine.style.animationDuration = `${5 + Math.random() * 10}s`;
+                    codeLine.style.animationDelay = `${Math.random() * 5}s`;
+                    codeOverlay.appendChild(codeLine);
+                }
+            }
+            
+            // Generate initial code overlay
+            generateCodeOverlay();
+            
+            // Set player size
+            player.style.width = '60px';
+            player.style.height = '60px';
+            
+            // Position player at center
+            player.style.left = playerX + 'px';
+            player.style.top = playerY + 'px';
+            
+            // Keys pressed
+            const keys = {
+                ArrowUp: false,
+                ArrowDown: false,
+                ArrowLeft: false,
+                ArrowRight: false
+            };
+            
+            // Event handlers for keys
+            window.addEventListener('keydown', function(e) {
+                if (keys.hasOwnProperty(e.key)) {
+                    keys[e.key] = true;
+                }
+            });
+            
+            window.addEventListener('keyup', function(e) {
+                if (keys.hasOwnProperty(e.key)) {
+                    keys[e.key] = false;
+                }
+            });
+            
+            // Touch support
+            gameContainer.addEventListener('touchstart', function(e) {
+                if (!gameRunning) return;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                e.preventDefault();
+            }, { passive: false });
+            
+            gameContainer.addEventListener('touchmove', function(e) {
+                if (!gameRunning) return;
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                
+                const containerRect = gameContainer.getBoundingClientRect();
+                const relativeX = touchX - containerRect.left;
+                const relativeY = touchY - containerRect.top;
+                
+                playerX = relativeX - player.offsetWidth / 2;
+                playerY = relativeY - player.offsetHeight / 2;
+                
+                // Boundaries
+                playerX = Math.max(0, Math.min(gameContainer.offsetWidth - player.offsetWidth, playerX));
+                playerY = Math.max(0, Math.min(gameContainer.offsetHeight - player.offsetHeight, playerY));
+                
+                player.style.left = playerX + 'px';
+                player.style.top = playerY + 'px';
+                
+                e.preventDefault();
+            }, { passive: false });
+            
+            // Function to create a crab
+            function createCrab() {
+                if (!gameRunning) return;
+                
+                const crab = document.createElement('div');
+                crab.className = 'crab';
+                
+                // Random position
+                const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+                let x, y, speedX, speedY;
+                
+                switch (side) {
+                    case 0: // top
+                        x = Math.random() * (gameContainer.offsetWidth - 50);
+                        y = -50;
+                        speedX = (Math.random() - 0.5) * 4;
+                        speedY = 1 + Math.random() * 3;
+                        break;
+                    case 1: // right
+                        x = gameContainer.offsetWidth;
+                        y = Math.random() * (gameContainer.offsetHeight - 50);
+                        speedX = -(1 + Math.random() * 3);
+                        speedY = (Math.random() - 0.5) * 4;
+                        break;
+                    case 2: // bottom
+                        x = Math.random() * (gameContainer.offsetWidth - 50);
+                        y = gameContainer.offsetHeight;
+                        speedX = (Math.random() - 0.5) * 4;
+                        speedY = -(1 + Math.random() * 3);
+                        break;
+                    case 3: // left
+                        x = -50;
+                        y = Math.random() * (gameContainer.offsetHeight - 50);
+                        speedX = 1 + Math.random() * 3;
+                        speedY = (Math.random() - 0.5) * 4;
+                        break;
+                }
+                
+                crab.style.left = x + 'px';
+                crab.style.top = y + 'px';
+                
+                // Add glitch effect randomly
+                if (Math.random() > 0.7) {
+                    crab.style.animation = 'float 3s infinite ease-in-out, glitch 0.3s infinite';
+                }
+                
+                gameContainer.appendChild(crab);
+                
+                crabs.push({
+                    element: crab,
+                    x: x,
+                    y: y,
+                    speedX: speedX,
+                    speedY: speedY
+                });
+            }
+            
+            // Function to create a logo
+            function createLogo() {
+                if (!gameRunning) return;
+                
+                const logo = document.createElement('div');
+                logo.className = 'logo';
+                
+                // Random position inside container
+                const x = Math.random() * (gameContainer.offsetWidth - 40);
+                const y = Math.random() * (gameContainer.offsetHeight - 40);
+                
+                logo.style.left = x + 'px';
+                logo.style.top = y + 'px';
+                
+                gameContainer.appendChild(logo);
+                
+                logos.push({
+                    element: logo,
+                    x: x,
+                    y: y
+                });
+                
+                // Remove logo after 5 seconds if not collected
+                setTimeout(() => {
+                    if (gameRunning && logos.includes(logo)) {
+                        const index = logos.findIndex(l => l.element === logo);
+                        if (index !== -1) {
+                            gameContainer.removeChild(logos[index].element);
+                            logos.splice(index, 1);
+                        }
+                    }
+                }, 5000);
+            }
+            
+            // Function to create a trap
+            function createTrap() {
+                if (!gameRunning) return;
+                
+                const trap = document.createElement('div');
+                trap.className = 'trap';
+                
+                // Random position inside container
+                const x = Math.random() * (gameContainer.offsetWidth - 30);
+                const y = Math.random() * (gameContainer.offsetHeight - 30);
+                
+                trap.style.left = x + 'px';
+                trap.style.top = y + 'px';
+                
+                gameContainer.appendChild(trap);
+                
+                traps.push({
+                    element: trap,
+                    x: x,
+                    y: y
+                });
+                
+                // Remove trap after 7 seconds
+                setTimeout(() => {
+                    if (gameRunning && traps.includes(trap)) {
+                        const index = traps.findIndex(t => t.element === trap);
+                        if (index !== -1) {
+                            gameContainer.removeChild(traps[index].element);
+                            traps.splice(index, 1);
+                        }
+                    }
+                }, 7000);
+            }
+            
+            // Function to check collisions
+            function checkCollisions() {
+                const playerRect = player.getBoundingClientRect();
+                const containerRect = gameContainer.getBoundingClientRect();
+                
+                // Check if player touches edges
+                if (playerX <= 0 || playerX >= gameContainer.offsetWidth - player.offsetWidth ||
+                    playerY <= 0 || playerY >= gameContainer.offsetHeight - player.offsetHeight) {
+                    sounds.gameOver.play();
+                    endGame();
+                    return;
+                }
+                
+                // Check collisions with crabs
+                for (let i = crabs.length - 1; i >= 0; i--) {
+                    const crab = crabs[i];
+                    const crabRect = crab.element.getBoundingClientRect();
+                    
+                    if (isColliding(playerRect, crabRect)) {
+                        // Collision with a crab
+                        gameContainer.removeChild(crab.element);
+                        crabs.splice(i, 1);
+                        score += 10;
+                        scoreElement.textContent = score;
+                        sounds.catch.play();
+                        
+                        // Add glitch effect to player briefly
+                        player.style.animation = 'rgb-split 5s infinite, glitch 0.3s infinite';
+                        setTimeout(() => {
+                            player.style.animation = 'rgb-split 5s infinite';
+                        }, 500);
+                    }
+                }
+                
+                // Check collisions with logos
+                for (let i = logos.length - 1; i >= 0; i--) {
+                    const logo = logos[i];
+                    const logoRect = logo.element.getBoundingClientRect();
+                    
+                    if (isColliding(playerRect, logoRect)) {
+                        // Collision with a logo
+                        gameContainer.removeChild(logo.element);
+                        logos.splice(i, 1);
+                        score += 25;
+                        scoreElement.textContent = score;
+                        sounds.logo.play();
+                        
+                        // Add glitch effect to score
+                        scoreElement.style.animation = 'rgb-split 1s';
+                        setTimeout(() => {
+                            scoreElement.style.animation = 'none';
+                        }, 1000);
+                    }
+                }
+                
+                // Check collisions with traps
+                for (let i = traps.length - 1; i >= 0; i--) {
+                    const trap = traps[i];
+                    const trapRect = trap.element.getBoundingClientRect();
+                    
+                    if (isColliding(playerRect, trapRect)) {
+                        // Collision with a trap
+                        gameContainer.removeChild(trap.element);
+                        traps.splice(i, 1);
+                        score = Math.max(0, score - 15); // Lose 15 points, minimum 0
+                        scoreElement.textContent = score;
+                        sounds.trap.play();
+                        
+                        // Add glitch effect to screen
+                        gameContainer.style.animation = 'glitch 0.3s infinite';
+                        setTimeout(() => {
+                            gameContainer.style.animation = 'none';
+                        }, 500);
+                    }
+                }
+            }
+            
+            // Function to check if two rectangles overlap
+            function isColliding(rect1, rect2) {
+                return !(rect1.right < rect2.left || 
+                         rect1.left > rect2.right || 
+                         rect1.bottom < rect2.top || 
+                         rect1.top > rect2.bottom);
+            }
+            
+            // Main game loop
+            function gameLoop() {
+                // Move player based on keys pressed
+                if (keys.ArrowUp) {
+                    playerY -= playerSpeed;
+                }
+                if (keys.ArrowDown) {
+                    playerY += playerSpeed;
+                }
+                if (keys.ArrowLeft) {
+                    playerX -= playerSpeed;
+                }
+                if (keys.ArrowRight) {
+                    playerX += playerSpeed;
+                }
+                
+                // Boundaries
+                playerX = Math.max(0, Math.min(gameContainer.offsetWidth - player.offsetWidth, playerX));
+                playerY = Math.max(0, Math.min(gameContainer.offsetHeight - player.offsetHeight, playerY));
+                
+                player.style.left = playerX + 'px';
+                player.style.top = playerY + 'px';
+                
+                // Move crabs
+                for (let i = crabs.length - 1; i >= 0; i--) {
+                    const crab = crabs[i];
+                    
+                    crab.x += crab.speedX;
+                    crab.y += crab.speedY;
+                    
+                    crab.element.style.left = crab.x + 'px';
+                    crab.element.style.top = crab.y + 'px';
+                    
+                    // Remove crabs that go off screen
+                    if (crab.x < -100 || crab.x > gameContainer.offsetWidth + 100 ||
+                        crab.y < -100 || crab.y > gameContainer.offsetHeight + 100) {
+                        gameContainer.removeChild(crab.element);
+                        crabs.splice(i, 1);
+                    }
+                }
+                
+                // Check collisions
+                checkCollisions();
+            }
+            
+            // Function to start the game
+            function startGame() {
+                sounds.start.play();
+                startScreen.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                gameRunning = true;
+                score = 0;
+                scoreElement.textContent = score;
+                
+                // Reset player position
+                playerX = gameContainer.offsetWidth / 2 - player.offsetWidth / 2;
+                playerY = gameContainer.offsetHeight / 2 - player.offsetHeight / 2;
+                player.style.left = playerX + 'px';
+                player.style.top = playerY + 'px';
+                
+                // Remove all existing crabs, logos and traps
+                crabs.forEach(crab => gameContainer.removeChild(crab.element));
+                logos.forEach(logo => gameContainer.removeChild(logo.element));
+                traps.forEach(trap => gameContainer.removeChild(trap.element));
+                crabs = [];
+                logos = [];
+                traps = [];
+                
+                // Start intervals
+                gameLoopInterval = setInterval(gameLoop, 20);
+                crabInterval = setInterval(createCrab, 1500);
+                logoInterval = setInterval(createLogo, 3000);
+                trapInterval = setInterval(createTrap, 5000);
+                
+                // Refresh code overlay
+                generateCodeOverlay();
+            }
+            
+            // Function to end the game
+            function endGame() {
+                gameRunning = false;
+                clearInterval(gameLoopInterval);
+                clearInterval(crabInterval);
+                clearInterval(logoInterval);
+                clearInterval(trapInterval);
+                
+                finalScoreElement.textContent = 'Score: ' + score;
+                gameOverScreen.style.display = 'flex';
+                
+                // Show transaction button if wallet is connected
+                if (walletConnected) {
+                    generateTransactionButton.style.display = 'block';
+                } else {
+                    generateTransactionButton.style.display = 'none';
+                }
+                
+                // Add score to leaderboard if high enough
+                if (score > 0) {
+                    const playerName = walletConnected ? 
+                        walletAddress.substring(0, 6) + '...' : 
+                        '0x' + Math.random().toString(16).substring(2, 6).toUpperCase() + '...';
+                    
+                    leaderboard.push({ name: playerName, score: score });
+                    leaderboard.sort((a, b) => b.score - a.score);
+                    if (leaderboard.length > 5) {
+                        leaderboard.pop();
+                    }
+                    updateLeaderboard();
+                }
+            }
+            
+            // Initialize Web3Modal
+            function initWeb3Modal() {
+                const providerOptions = {
+                    walletconnect: {
+                        package: WalletConnectProvider,
+                        options: {
+                            infuraId: "27e484dcd9e3efcfd25a83a78777cdf1" // Replace with your Infura ID
+                        }
+                    }
+                };
+                
+                web3Modal = new Web3Modal({
+                    cacheProvider: false,
+                    providerOptions,
+                    theme: "dark"
+                });
+            }
+            
+            // Initialize Web3Modal
+            initWeb3Modal();
+            
+            // Function to connect wallet
+            async function connectWallet() {
+                try {
+                    // Connect using Web3Modal
+                    const instance = await web3Modal.connect();
+                    provider = new ethers.providers.Web3Provider(instance);
+                    const accounts = await provider.listAccounts();
+                    
+                    if (accounts.length > 0) {
+                        walletAddress = accounts[0];
+                        walletConnected = true;
+                        
+                        // Update UI
+                        walletStatusElement.textContent = 'Wallet connected: ' + walletAddress.substring(0, 6) + '...' + walletAddress.substring(walletAddress.length - 4);
+                        connectWalletButton.textContent = 'Wallet Connected';
+                        
+                        // Setup ethers.js
+                        signer = provider.getSigner();
+                        
+                        // Play sound
+                        sounds.wallet.play();
+                        
+                        // Add glitch effect
+                        connectWalletButton.style.animation = 'glitch 0.3s infinite';
+                        setTimeout(() => {
+                            connectWalletButton.style.animation = '';
+                        }, 1000);
+                        
+                        // Listen for account changes
+                        instance.on('accountsChanged', function (accounts) {
+                            if (accounts.length === 0) {
+                                // User disconnected
+                                walletConnected = false;
+                                walletAddress = '';
+                                walletStatusElement.textContent = 'Wallet not connected';
+                                connectWalletButton.textContent = 'Connect Wallet';
+                                generateTransactionButton.style.display = 'none';
+                            } else {
+                                // User changed account
+                                walletAddress = accounts[0];
+                                walletStatusElement.textContent = 'Wallet connected: ' + walletAddress.substring(0, 6) + '...' + walletAddress.substring(walletAddress.length - 4);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error connecting to wallet:", error);
+                    walletStatusElement.textContent = 'Connection error: ' + error.message;
+                }
+            }
+            
+            // Function to generate a transaction on Succinct testnet
+            async function generateTransaction() {
+                if (!walletConnected) {
+                    transactionStatusElement.textContent = 'Please connect your wallet first.';
+                    return;
+                }
+                
+                try {
+                    transactionStatusElement.textContent = 'Preparing transaction...';
+                    
+                    // Play sound
+                    sounds.transaction.play();
+                    
+                    // Succinct Testnet contract address
+                    const succinctContractAddress = "0x002f7a43dc99e5f1cE2a5A8b3B7672bfAF20ee80";
+                    
+                    // Simplified ABI for interaction
+                    const abi = [
+                        "function recordScore(uint256 score) external"
+                    ];
+                    
+                    // Create contract instance
+                    const contract = new ethers.Contract(succinctContractAddress, abi, signer);
+                    
+                    // Send transaction to record score
+                    transactionStatusElement.textContent = 'Sending transaction...';
+                    transactionStatusElement.style.animation = 'rgb-split 2s infinite';
+                    
+                    const tx = await contract.recordScore(score);
+                    
+                    transactionStatusElement.textContent = 'Transaction sent! Hash: ' + tx.hash;
+                    
+                    // Wait for confirmation
+                    const receipt = await tx.wait();
+                    transactionStatusElement.textContent = 'Transaction confirmed! Your score of ' + score + ' has been recorded on the Succinct testnet.';
+                    transactionStatusElement.style.animation = '';
+                    
+                } catch (error) {
+                    console.error("Error generating transaction:", error);
+                    transactionStatusElement.textContent = 'Error: ' + error.message;
+                    transactionStatusElement.style.animation = '';
+                }
+            }
+            
+            // Button event handlers
+            startButton.addEventListener('click', startGame);
+            restartButton.addEventListener('click', startGame);
+            connectWalletButton.addEventListener('click', connectWallet);
+            generateTransactionButton.addEventListener('click', generateTransaction);
+        });
+    </script>
+</body>
+</html>
